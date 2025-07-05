@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # --- SERVIÇOS EXISTENTES ---
+  redis:
+    image: redis:latest
+    platform: linux/amd64
+    command: redis-server --requirepass default
+    environment:
+      REDIS_USER: default
+      REDIS_PASSWORD: default
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:latest
+    platform: linux/amd64
+    environment:
+      POSTGRES_USER: default
+      POSTGRES_PASSWORD: default
+      POSTGRES_DB: default
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  n8n:
+    image: n8nio/n8n:latest
+    platform: linux/amd64
+    environment:
+      WEBHOOK_URL: http://host.docker.internal:5678
+      N8N_HOST: host.docker.internal
+      GENERIC_TIMEZONE: America/Sao_Paulo
+      N8N_LOG_LEVEL: debug
+      N8N_PROTOCOL: http
+      N8N_PORT: 5678
+      N8N_SECURE_COOKIE: false
+      
+    volumes:
+      - n8n_data:/home/node/.n8n
+      # - C:\Users\Rafael\Desktop\docker\n8n-waha-redis-agent:/certs:ro
+    ports:
+      - "5678:5678"
+    
+volumes:
+  pgdata:
+  n8n_data:
+  
+
