@@ -1,0 +1,342 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1300,
+        -480
+      ],
+      "id": "9955594d-c101-4670-942c-574f7a3259f2",
+      "name": "When chat message received",
+      "webhookId": "b55dd12f-4e5f-4446-a449-ec4b129e4ea9"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "=<identity>\nVocê é a JIA, uma assistente de IA da JusCash, especialista em análise de projetos. Sua personalidade é amigável, profissional e proativa. Você se comunica de forma concisa, como em um chat.\n</identity>\n\n<role>\nSeu objetivo é guiar o usuário através do processo completo de análise de um projeto. Você é responsável por identificar o gerente, coletar os dados do projeto, chamar a API de análise, apresentar o resultado e responder a dúvidas conceituais sobre os dados solicitados.\n</role>\n\n<knowledge_scope>\nSua expertise é estritamente limitada aos seguintes tópicos:\n\n1.  **Coleta de Dados do Projeto:** Guiar o usuário para obter os 6 parâmetros necessários para a análise (Duração, Orçamento, Equipe, Tipo, Complexidade, Risco).\n\n2.  **Dúvidas Conceituais sobre o Projeto:** Esclarecer o que significam os parâmetros solicitados. Por exemplo, se o usuário perguntar \"O que você considera um projeto de complexidade alta?\" ou \"Como posso estimar o orçamento?\", você deve fornecer uma resposta útil e contextualizada para ajudá-lo a preencher os dados.\n</knowledge_scope>\n\n<out_of_scope_policy>\nSe o usuário perguntar sobre QUALQUER OUTRO ASSUNTO que não esteja no seu <knowledge_scope> (ex: o tempo, notícias, outros serviços da JusCash, quem é o CEO, etc.), você DEVE, obrigatoriamente, usar uma variação da seguinte resposta, sem fornecer nenhuma informação sobre o assunto solicitado:\n\n\"Peço desculpas, mas meu foco é exclusivamente auxiliar na análise de dados de projetos. Não tenho informações sobre esse assunto. Podemos continuar com os detalhes do seu projeto?\"\n</out_of_scope_policy>\n\n<steps_and_logic>\n1.  **IDENTIFICAÇÃO:** Se o histórico da conversa for novo, sua primeira ação é SEMPRE perguntar o nome do usuário. Após ele responder, use a ferramenta `buscar_gerente` para validar o nome.\n    - Se a ferramenta retornar `success: true`, salve as informações do gerente ('user_info') na memória da conversa, dê as boas-vindas pelo nome (ex: \"Perfeito, Ana Silva! Vamos começar...\") e prossiga para a coleta de dados.\n    - Se a ferramenta retornar `success: false`, salve as informações do gerente padrão ('user_info') na memória, informe que usará dados de um \"gerente médio\" (ex: \"Olá, Ana! Não encontrei seu histórico, então usarei dados médios para a análise...\") e prossiga para a coleta de dados.\n\n2.  **COLETA DE DADOS:** Converse com o usuário para obter os 6 dados do projeto. Analise a memória da conversa para saber quais dados já tem e quais ainda faltam. Para os campos categóricos, você DEVE classificar a resposta do usuário nas categorias válidas:\n    - \"Tipo_Projeto\": ['Software', 'Infraestrutura', 'Marketing', 'P&D']\n    - \"Complexidade\": ['Baixa', 'Media', 'Alta']\n    - \"Risco_Inicial\": ['Baixo', 'Medio', 'Alto']\n    Após coletar um ou mais dados, salve-os no campo 'dados_coletados' da memória.\n\n3.  **ANÁLISE:** QUANDO E SOMENTE QUANDO tiver todos os 6 dados do projeto na memória, use a ferramenta `chamar_api_predicao` com esses dados.\n\n4.  **RESULTADO E PRÓXIMOS PASSOS:** Apresente o resultado da predição de forma clara e direta (não como um e-mail). Após apresentar o resultado, pergunte ao usuário o que ele deseja fazer a seguir (analisar outro projeto, mudar de gerente ou encerrar).\n\n</steps_and_logic>\n\n<rules>\n- NUNCA chame a ferramenta `chamar_api_predicao` antes de ter todos os 6 dados do projeto.\n- Analise SEMPRE o histórico da conversa (fornecido pela memória) para não pedir informações que você já tem.\n- NUNCA responda a perguntas fora do seu <knowledge_scope>. Siga a <out_of_scope_policy> rigorosamente.\n</rules>"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -340,
+        -480
+      ],
+      "id": "2caa1221-b6b0-40ab-93a8-d52175eb1340",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionTTL": "=3600",
+        "contextWindowLength": 500
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.4,
+      "position": [
+        -300,
+        -180
+      ],
+      "id": "2b6ac7ba-2e6b-4fc1-9d26-31c2bb220e28",
+      "name": "Memory",
+      "notesInFlow": false,
+      "credentials": {
+        "redis": {
+          "id": "13wY9QtWrsJBFGNV",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -460,
+        -200
+      ],
+      "id": "fbad2017-5036-4a4f-82da-84d8a9f8d2a3",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "eyI35evqxMUov7Si",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Use esta ferramenta para buscar as informações de um gerente pelo nome completo, onde deve ser extraido o nome do usuario",
+        "jsCode": "// Recebe o nome da IA e os dados globais\nconst nomeParaBuscar = $input.query.toLowerCase();\nconst users = $('GLOBAL').first().json.global_data.users;\nconst defaultUser = $('GLOBAL').first().json.global_data.default_user;\n\nconst foundUser = users.find(u => u.Nome.toLowerCase() === nomeParaBuscar);\n\nif (foundUser) {\n  return { json: { success: true, user_info: foundUser } };\n} else {\n  defaultUser.Nome = $input.item.json.nome;\n  return { json: { success: false, user_info: defaultUser, message: \"Usuário não encontrado, usando valores padrão.\" } };\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.2,
+      "position": [
+        -140,
+        -200
+      ],
+      "id": "9f2be634-4aac-43ba-b304-af7d00c920a7",
+      "name": "Buscar Gerentes",
+      "executeOnce": false,
+      "alwaysOutputData": false,
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Nossa base de dados de usuários\nconst users = [\n    { \"Usuario_ID\": 1, \"Nome\": \"Ana Silva\", \"Cargo\": \"Gerente de Projetos Sênior\", \"Experiencia (anos)\": 12, \"Historico de Projetos\": 25, \"Sucesso Medio (percentual)\": \"0,88\" },\n    { \"Usuario_ID\": 2, \"Nome\": \"Bruno Costa\", \"Cargo\": \"Gerente de Projetos Pleno\", \"Experiencia (anos)\": 7, \"Historico de Projetos\": 15, \"Sucesso Medio (percentual)\": \"0,82\" },\n    { \"Usuario_ID\": 3, \"Nome\": \"Carla Dias\", \"Cargo\": \"Gerente de TI\", \"Experiencia (anos)\": 10, \"Historico de Projetos\": 18, \"Sucesso Medio (percentual)\": \"0,91\" }\n];\n\n// 2. Calcula os valores padrão (usando mediana para robustez)\nconst experiencias = users.map(u => u[\"Experiencia (anos)\"]);\nconst historicos = users.map(u => u[\"Historico de Projetos\"]);\nconst sucessos = users.map(u => parseFloat(String(u[\"Sucesso Medio (percentual)\"]).replace(',', '.')));\n\n// Ordena para pegar a mediana\nexperiencias.sort((a, b) => a - b);\nhistoricos.sort((a, b) => a - b);\nsucessos.sort((a, b) => a - b);\n\nconst defaultUser = {\n    \"Nome\": \"Visitante\",\n    \"Experiencia (anos)\": experiencias[Math.floor(experiencias.length / 2)],\n    \"Historico de Projetos\": historicos[Math.floor(historicos.length / 2)],\n    \"Sucesso Medio (percentual)\": sucessos[Math.floor(sucessos.length / 2)]\n};\n\n// 3. Retorna os dados para o resto do workflow\nreturn {\n    users: users,\n    default_user: defaultUser\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -780,
+        -480
+      ],
+      "id": "da42d679-f72c-4530-b2a5-f3f568c48f31",
+      "name": "Carregar Dados e Padrões"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cc7df311-eb0c-4945-a345-2a9d830a8b66",
+              "name": "sessionId",
+              "value": "={{ $json.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "46fc19c7-270e-4946-9aaa-647d3ccd9603",
+              "name": "action",
+              "value": "={{ $json.action }}",
+              "type": "string"
+            },
+            {
+              "id": "81b70d19-0689-4aeb-b4c4-9440b0003b2a",
+              "name": "chatInput",
+              "value": "={{ $json.chatInput }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1080,
+        -480
+      ],
+      "id": "3e3138eb-59f8-4c52-9285-e57acc6a4890",
+      "name": "SET CHAT_INFO"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5fb3eb60-f1f3-4988-9974-b080648131aa",
+              "name": "users",
+              "value": "={{ $json.users }}",
+              "type": "array"
+            },
+            {
+              "id": "c3af1ebf-9f10-4e40-8414-5c1df8ad1053",
+              "name": "default_user",
+              "value": "={{ $json.default_user }}",
+              "type": "object"
+            },
+            {
+              "id": "2431e13a-bf43-455a-8ae9-a05059fd9011",
+              "name": "sessionId",
+              "value": "={{ $('SET CHAT_INFO').item.json.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "2436c552-460a-47ee-96da-b27298936f9e",
+              "name": "action",
+              "value": "={{ $('SET CHAT_INFO').item.json.action }}",
+              "type": "string"
+            },
+            {
+              "id": "76284086-2be7-47ce-a197-00db3d7e2f3f",
+              "name": "chatInput",
+              "value": "={{ $('SET CHAT_INFO').item.json.chatInput }}",
+              "type": "string"
+            },
+            {
+              "id": "6571168d-e30a-4317-8af8-a69ab5114b89",
+              "name": "activeUser",
+              "value": "={{ $json.default_user }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -560,
+        -480
+      ],
+      "id": "a36fb6b0-359d-488d-80e7-509f5307d065",
+      "name": "GLOBAL"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use esta ferramenta SOMENTE quando tiver coletado TODOS os 6 dados do projeto . Ela retorna a previsão de sucesso. passe para a api os devidos dados: {\n\"Duracao_Meses\": 0,\n\"Orcamento_Milhares_Reais\": 0,\n\"Tamanho_Equipe\": 0,\n\"Tipo_Projeto\": \"\",\n\"Complexidade\":\"\",\n\"Risco_Inicial\":\"\"\n}",
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/v2/prever",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "Duracao_Meses",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', `Duração do projeto em eses, sendo um número inteiro`, 'string') }}"
+            },
+            {
+              "name": "Orcamento_Milhares_Reais",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', `O orçamento para o projeto, que é um número float`, 'string') }}"
+            },
+            {
+              "name": "Tamanho_Equipe",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters2_Value', `è o tamanho da equipe para o projeto, que é um número inteiro`, 'string') }}"
+            },
+            {
+              "name": "Tipo_Projeto",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters3_Value', `Tipo do projeto, que é uma string e pode ser as seguintes opções: 'Software', 'Infraestrutura', 'Marketing', 'P&D'`, 'string') }}"
+            },
+            {
+              "name": "Complexidade",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters4_Value', `Complexidade do projeto, que é uma string pode ser 3 opções: 'Baixo', 'Medio', 'Alto'`, 'string') }}"
+            },
+            {
+              "name": "Sucesso_Medio_percentual",
+              "value": "={{ $('GLOBAL').item.json.activeUser['Sucesso Medio (percentual)'] }}"
+            },
+            {
+              "name": "Historico_de_Projetos",
+              "value": "={{ $('GLOBAL').item.json.activeUser['Historico de Projetos'] }}"
+            },
+            {
+              "name": "Experiencia_anos",
+              "value": "={{ $('GLOBAL').item.json.activeUser['Experiencia (anos)'] }}"
+            },
+            {
+              "name": "Risco_Inicial",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters8_Value', `Risco inicial do projeto, que é uma string pode ser 3 opções: 'Baixo', 'Medio', 'Alto'`, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        40,
+        -200
+      ],
+      "id": "c0005127-88c9-44ba-aad7-3a41a107c85e",
+      "name": "chamar_api_predicao"
+    }
+  ],
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "SET CHAT_INFO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar Gerentes": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Carregar Dados e Padrões": {
+      "main": [
+        [
+          {
+            "node": "GLOBAL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SET CHAT_INFO": {
+      "main": [
+        [
+          {
+            "node": "Carregar Dados e Padrões",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GLOBAL": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "chamar_api_predicao": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8e697f61e2cb82183570612d4330d7caf511f1e83628a2a6f7be71b6d85387d6"
+  }
+}

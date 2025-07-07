@@ -32,12 +32,13 @@ URL_API = "http://127.0.0.1:8000/v2/prever"
 @st.cache_data
 def carregar_dados_usuarios():
     """Carrega o arquivo CSV de usuários e calcula os valores padrão."""
-    caminho_csv = os.path.join('..', 'modelo_ml', 'data', 'users.csv')
+    caminho_csv = os.path.join('..', 'data', 'users.csv')
     try:
         df = pd.read_csv(caminho_csv, sep=';')
         df['Experiencia (anos)'] = pd.to_numeric(df['Experiencia (anos)'], errors='coerce')
         df['Historico de Projetos'] = pd.to_numeric(df['Historico de Projetos'], errors='coerce')
-        df['Sucesso Medio (percentual)'] = df['Sucesso Medio (percentual)'].str.replace(',', '.', regex=False).astype(float)
+        # df['Sucesso Medio (percentual)'] = df['Sucesso Medio (percentual)'].str.replace(',', '.', regex=False).astype(float)
+        df['Sucesso Medio (percentual)'] = df['Sucesso Medio (percentual)'].astype(str).str.replace(',', '.', regex=False).astype(float)
         
         default_user = {
             "Nome": "Visitante",
@@ -171,15 +172,41 @@ elif st.session_state.app_state == "DATA_COLLECTION":
 
     # Template para coleta de dados
     coleta_prompt_template = """
-    Você é a JIA. Seu objetivo é coletar os seguintes dados: {campos_necessarios}.
-    Dados já coletados: {dados_coletados_json}
-    REGRAS DE CLASSIFICAÇÃO: Mapeie a resposta do usuário para uma das opções válidas:
+    <identity>
+    Você é a JIA, uma assistente de IA da JusCash, especialista em análise de projetos. Sua personalidade é amigável, profissional e proativa.
+    </identity>
+
+    <knowledge_scope>
+    Sua expertise é estritamente limitada aos seguintes tópicos:
+    1.  **Coleta de Dados do Projeto:** Guiar o usuário para obter os 6 parâmetros 
+    necessários para a análise (Duração, Orçamento, Equipe, Tipo, Complexidade, Risco).
+    2.  **Dúvidas Conceituais sobre o Projeto:** Esclarecer o que significam os parâmetros
+    solicitados. Por exemplo, se o usuário perguntar "O que você considera um projeto de 
+    complexidade alta?" ou "Como posso estimar o orçamento?", você deve fornecer uma resposta 
+    útil e contextualizada para ajudá-lo a preencher os dados.
+    </knowledge_scope>
+
+    <out_of_scope_policy>
+    Se o usuário perguntar sobre QUALQUER OUTRO ASSUNTO, use a seguinte resposta:
+    "Peço desculpas, mas meu foco é exclusivamente auxiliar na análise de dados de projetos. Não tenho informações sobre esse assunto. Podemos continuar?"
+    </out_of_scope_policy>
+
+    <task>
+    Analise a última mensagem do usuário e o histórico. Determine a intenção dele (fornecer dados, fazer uma pergunta sobre o escopo, ou sair do escopo).
+    - Se ele fornecer dados, extraia-os e classifique-os para as categorias válidas:
     - "Tipo_Projeto": ['Software', 'Infraestrutura', 'Marketing', 'P&D']
     - "Complexidade": ['Baixa', 'Media', 'Alta']
     - "Risco_Inicial": ['Baixo', 'Medio', 'Alto']
-    Ações: Extraia os dados, confirme o que entendeu e peça a próxima informação.
-    Histórico: {chat_history}
+    - Formule uma resposta amigável, confirme o que entendeu e peça a próxima informação.
+    - Se ele fizer uma pergunta dentro do escopo, responda-a e depois peça a próxima informação.
+    - Se ele sair do escopo, aplique a política de "fora de escopo".
+    </task>
+    
+    Dados já coletados: {dados_coletados_json}
+    Histórico da Conversa:
+    {chat_history}
     Usuário: {user_input}
+
     Sua resposta DEVE SER APENAS um JSON: {{"dados_extraidos": {{"Campo": "Valor"}}, "resposta_conversacional": "Sua resposta."}}
     """
     campos_necessarios = ["Duracao_Meses", "Orcamento_Milhares_Reais", "Tamanho_Equipe", "Tipo_Projeto", "Complexidade", "Risco_Inicial"]
