@@ -1,5 +1,5 @@
 # =============================================================================
-# PASSO 0: IMPORTAÇÃO DAS BIBLIOTECAS
+# IMPORTAÇÃO DAS BIBLIOTECAS
 # =============================================================================
 import pandas as pd
 import numpy as np
@@ -9,7 +9,7 @@ import joblib
 import os
 
 from sklearn.model_selection import train_test_split
-from sklearn.impute import SimpleImputer # <-- IMPORTANTE: Adicionado para lidar com valores ausentes
+from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
@@ -21,16 +21,16 @@ sns.set_style('whitegrid')
 print("Bibliotecas importadas.")
 
 # =============================================================================
-# PASSO 1: CARREGAMENTO DOS DADOS
+# CARREGAMENTO DOS DADOS
 # =============================================================================
-print("\n--- Carregando os dados v2 ---")
+print("\n--- Carregando os dados ---")
 PASTA_DADOS = '../data'
 try:
     df_projetos = pd.read_csv('../data/projetos_kaggle_v2.csv', sep=';', decimal='.')
     df_usuarios = pd.read_csv('../data/users.csv', sep=';', decimal='.')
-    print("Arquivos CSV v2 carregados com sucesso.")
+    print("Arquivos CSVs carregados com sucesso.")
 except FileNotFoundError as e:
-    print(f"Erro: Arquivo não encontrado. Execute o script 'gerar_dados_v2.py' primeiro.")
+    print(f"Atenção: Arquivo não encontrado.")
     exit()
 
 # Juntando os dados do gerente (usuário) ao dataset de projetos para o treinamento
@@ -39,15 +39,14 @@ print("Shape do DataFrame de treinamento combinado:", df_treinamento.shape)
 print(df_treinamento.head())
 
 # =============================================================================
-# PASSO 2: ANÁLISE EXPLORATÓRIA DE DADOS (EDA)
+# ANÁLISE EXPLORATÓRIA DE DADOS (EDA)
 # =============================================================================
 print("\n--- Análise Exploratória (EDA) ---")
 df_treinamento.info()
 
-# Verificando valores ausentes (NaN) - a causa do erro
+# Verificando valores ausentes (NaN)
 print("\nVerificando valores ausentes (NaN) por coluna:")
 print(df_treinamento.isnull().sum())
-# Se houver NaNs, eles aparecerão aqui. O passo de imputação abaixo irá corrigi-los.
 
 # Visualizando a influência das novas variáveis categóricas no sucesso
 fig, axes = plt.subplots(1, 3, figsize=(18, 5))
@@ -61,7 +60,7 @@ plt.tight_layout()
 plt.show()
 
 # =============================================================================
-# PASSO 3: PRÉ-PROCESSAMENTO E DEFINIÇÃO DO PIPELINE
+# PRÉ-PROCESSAMENTO E DEFINIÇÃO DO PIPELINE
 # =============================================================================
 print("\n--- Pré-processamento e Pipeline ---")
 
@@ -80,9 +79,6 @@ categorical_features = X.select_dtypes(exclude=np.number).columns.tolist()
 print("\nFeatures numéricas para escalar:", numeric_features)
 print("Features categóricas para OneHotEncode:", categorical_features)
 
-# CORREÇÃO: Criando pipelines separados para features numéricas e categóricas
-# para incluir a etapa de imputação (preenchimento de NaNs).
-
 # Pipeline para dados numéricos: preenche NaNs com a mediana e depois escala.
 numeric_transformer = Pipeline(steps=[
     ('imputer', SimpleImputer(strategy='median')),
@@ -100,10 +96,11 @@ preprocessor = ColumnTransformer(
     transformers=[
         ('num', numeric_transformer, numeric_features),
         ('cat', categorical_transformer, categorical_features)
-    ])
+    ]
+)
 
 # =============================================================================
-# PASSO 4: TREINAMENTO E AVALIAÇÃO DOS MODELOS
+# TREINAMENTO E AVALIAÇÃO DOS MODELOS
 # =============================================================================
 print("\n--- Treinando e Avaliando Modelos ---")
 
@@ -122,12 +119,13 @@ print("\nRelatório de Classificação - Random Forest:")
 print(classification_report(y_test, y_pred_rf))
 
 # =============================================================================
-# PASSO 5: SELEÇÃO E SALVAMENTO DO MELHOR MODELO
+# SELEÇÃO E SALVAMENTO DO MELHOR MODELO
 # =============================================================================
 print("\n--- Seleção do Modelo Final ---")
 f1_rf = f1_score(y_test, y_pred_rf)
 f1_logreg = f1_score(y_test, y_pred_logreg)
 
+# Decisão do melhor modelo com base no F1-Score
 if f1_rf > f1_logreg:
     melhor_pipeline = pipeline_rf
     nome_modelo = "Random Forest"
@@ -137,9 +135,9 @@ else:
 
 print(f"Modelo selecionado: {nome_modelo} com F1-Score de {max(f1_rf, f1_logreg):.4f}")
 
-# Salvando o pipeline v2
+# Salvando o pipeline
 PASTA_ARTEFATOS = '../artefatos'
 os.makedirs(PASTA_ARTEFATOS, exist_ok=True)
 caminho_artefato = os.path.join(PASTA_ARTEFATOS, 'pipeline_predicao_sucesso_v2.joblib')
 joblib.dump(melhor_pipeline, caminho_artefato)
-print(f"Pipeline v2 salvo com sucesso em: '{caminho_artefato}'")
+print(f"Pipeline salvo com sucesso em: '{caminho_artefato}'")

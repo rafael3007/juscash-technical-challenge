@@ -4,6 +4,8 @@ import requests
 import json
 import os
 import re
+
+# Importações para as variáveis de ambiente
 from dotenv import load_dotenv
 
 # Importações do LangChain
@@ -14,7 +16,7 @@ from langchain.chains import LLMChain
 # =============================================================================
 # CONFIGURAÇÃO INICIAL
 # =============================================================================
-load_dotenv()
+load_dotenv() # Carrega as variáveis de ambiente do arquivo .env
 
 st.set_page_config(
     page_title="JusCash | Análise de Projetos com JIA",
@@ -114,6 +116,7 @@ if "dados_coletados" not in st.session_state:
     st.session_state.dados_coletados = {}
 
 try:
+    # Definição do modelo de linguagem
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-pro", temperature=0.2, convert_system_message_to_human=True)
 except Exception as e:
     st.error(f"Erro ao inicializar o modelo Gemini: {e}")
@@ -165,6 +168,8 @@ if st.session_state.app_state == "IDENTIFICATION":
 
 # ESTADO 2: DATA_COLLECTION
 elif st.session_state.app_state == "DATA_COLLECTION":
+
+    # Template para coleta de dados
     coleta_prompt_template = """
     Você é a JIA. Seu objetivo é coletar os seguintes dados: {campos_necessarios}.
     Dados já coletados: {dados_coletados_json}
@@ -189,6 +194,7 @@ elif st.session_state.app_state == "DATA_COLLECTION":
                 dados_coletados_keys = st.session_state.dados_coletados.keys()
                 dados_faltantes = [item for item in campos_necessarios if item not in dados_coletados_keys]
                 
+                # Se ainda faltam dados, JIA coleta mais informações
                 prompt_para_llm = coleta_prompt_template.format(
                     campos_necessarios=", ".join(dados_faltantes),
                     dados_coletados_json=json.dumps(st.session_state.dados_coletados, indent=2),
@@ -229,6 +235,7 @@ elif st.session_state.app_state == "DATA_COLLECTION":
                         prob = resultado_ml.get('probabilidade_de_sucesso', 0)
                         previsao = resultado_ml.get('previsao', 'Indefinida')
                         
+                        # Template para resposta final
                         template_final = """
                         Apresente o resultado da análise para {nome_usuario} de forma concisa e direta.
                         Resultado: Previsão de '{previsao}' com {probabilidade:.1%} de chance de sucesso.
@@ -250,6 +257,8 @@ elif st.session_state.app_state == "DATA_COLLECTION":
 
 # ESTADO 3: POST_ANALYSIS
 elif st.session_state.app_state == "POST_ANALYSIS":
+
+    # Template para análise pós-resposta do usuário
     post_analysis_prompt = """
     Analise a resposta do usuário e classifique sua intenção em uma das três categorias: 'new_project', 'new_user', ou 'end_conversation'.
     - 'novo projeto', 'outro', 'sim': 'new_project'

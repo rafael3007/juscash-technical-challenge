@@ -5,24 +5,23 @@ import joblib
 import os
 from typing import Literal
 
-# --- INICIALIZAÇÃO DA API E CARREGAMENTO DO MODELO V2 ---
+# --- INICIALIZAÇÃO DA API E CARREGAMENTO DO MODELO ---
 app = FastAPI(
     title="JusCash - API de Previsão de Sucesso v2",
-    version="2.0.0"
+    version="2.1.5"
 )
 
-# Carregando o novo pipeline v2
+# Carregando o novo pipeline
 caminho_artefato = os.path.join('artefatos', 'pipeline_predicao_sucesso_v2.joblib')
 pipeline = None
 try:
     pipeline = joblib.load(caminho_artefato)
-    print(f"Pipeline v2 carregado com sucesso de: {caminho_artefato}")
+    print(f"Pipeline carregado com sucesso de: {caminho_artefato}")
 except Exception as e:
-    print(f"Erro ao carregar o pipeline v2: {e}")
+    print(f"Erro ao carregar o pipeline: {e}")
     pipeline = None
 
-# --- DEFINIÇÃO DO MODELO DE DADOS DE ENTRADA V2 (PYDANTIC) ---
-# O schema agora reflete as colunas usadas no novo treinamento
+# --- DEFINIÇÃO DO MODELO DE DADOS DE ENTRADA (PYDANTIC) ---
 class DadosEntradaProjeto(BaseModel):
     # Features do projeto
     Duracao_Meses: int = Field(..., example=12, description="Duração total do projeto em meses.")
@@ -38,10 +37,9 @@ class DadosEntradaProjeto(BaseModel):
     Sucesso_Medio_percentual: float = Field(..., example=0.8, alias="Sucesso Medio (percentual)")
 
     class Config:
-        # CORREÇÃO: 'allow_population_by_field_name' foi renomeado para 'populate_by_name' no Pydantic V2
         populate_by_name = True
 
-# --- ENDPOINT DE PREVISÃO V2 ---
+# --- ENDPOINT DE PREVISÃO ---
 @app.post("/v2/prever")
 def prever_sucesso_v2(dados: DadosEntradaProjeto):
     """
@@ -51,13 +49,13 @@ def prever_sucesso_v2(dados: DadosEntradaProjeto):
         raise HTTPException(status_code=503, detail="Modelo v2 não está disponível.")
 
     try:
-        # Converte os dados Pydantic para um dicionário, respeitando os 'alias'
+        # Converte os dados Pydantic para um dicionário
         dados_dict = dados.dict(by_alias=True)
-        # Transforma o dicionário em um DataFrame com uma única linha
+
+        # Transforma o dicionário em um DataFrame
         df_para_prever = pd.DataFrame([dados_dict])
 
         # Garante a ordem correta das colunas como no treinamento
-        # O pipeline do scikit-learn é sensível à ordem das colunas
         colunas_treinamento = [
             'Duracao_Meses', 'Orcamento_Milhares_Reais', 'Tamanho_Equipe',
             'Tipo_Projeto', 'Complexidade', 'Risco_Inicial',
@@ -79,5 +77,5 @@ def prever_sucesso_v2(dados: DadosEntradaProjeto):
 
 @app.get("/")
 def read_root():
-    return {"status": "API da JusCash v2 no ar!", "docs_url": "/docs"}
+    return {"status": "API da JusCash no ar!", "docs_url": "/docs"}
 
