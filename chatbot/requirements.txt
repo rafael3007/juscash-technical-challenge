@@ -1,6 +1,6 @@
 streamlit
-requests
 pandas
+requests
+python-dotenv
 langchain
 langchain-google-genai ## openai
-python-dotenv

@@ -1,10 +1,10 @@
-scikit-learn
 pandas
 numpy
 matplotlib
 seaborn
-scipy
 joblib
-pydantic
+scikit-learn
 fastapi
-uvicorn
+uvicorn[standard]
+scipy
+pydantic
