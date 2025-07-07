@@ -7,7 +7,7 @@ from typing import Literal
 
 # --- INICIALIZAÇÃO DA API E CARREGAMENTO DO MODELO ---
 app = FastAPI(
-    title="JusCash - API de Previsão de Sucesso v2",
+    title="JusCash - API de Previsão de Sucesso",
     version="2.1.5"
 )
 
@@ -31,7 +31,7 @@ class DadosEntradaProjeto(BaseModel):
     Complexidade: Literal['Baixa', 'Media', 'Alta']
     Risco_Inicial: Literal['Baixo', 'Medio', 'Alto']
 
-    # Features do gerente (usuário) que serão combinadas
+    # Features dos usuarios que serão combinadas
     Experiencia_anos: int = Field(..., example=5, alias="Experiencia (anos)")
     Historico_de_Projetos: int = Field(..., example=15, alias="Historico de Projetos")
     Sucesso_Medio_percentual: float = Field(..., example=0.8, alias="Sucesso Medio (percentual)")
@@ -73,7 +73,7 @@ def prever_sucesso_v2(dados: DadosEntradaProjeto):
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ocorreu um erro na previsão v2: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ocorreu um erro na previsão: {str(e)}")
 
 @app.get("/")
 def read_root():

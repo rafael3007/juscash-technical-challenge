@@ -33,7 +33,7 @@ except FileNotFoundError as e:
     print(f"Atenção: Arquivo não encontrado.")
     exit()
 
-# Juntando os dados do gerente (usuário) ao dataset de projetos para o treinamento
+# Juntando os dados do usuário ao dataset de projetos para o treinamento
 df_treinamento = pd.merge(df_projetos, df_usuarios, left_on='ID_Gerente', right_on='Usuario_ID', how='left')
 print("Shape do DataFrame de treinamento combinado:", df_treinamento.shape)
 print(df_treinamento.head())
@@ -57,7 +57,7 @@ axes[1].set_title('Sucesso por Complexidade')
 sns.countplot(ax=axes[2], x='Risco_Inicial', hue='Sucesso', data=df_treinamento)
 axes[2].set_title('Sucesso por Risco Inicial')
 plt.tight_layout()
-plt.show()
+plt.show() # Exibe os gráficos, comentar para não exibir em produção
 
 # =============================================================================
 # PRÉ-PROCESSAMENTO E DEFINIÇÃO DO PIPELINE
