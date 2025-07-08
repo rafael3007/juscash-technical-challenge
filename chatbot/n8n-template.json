@@ -7,7 +7,7 @@
       "type": "@n8n/n8n-nodes-langchain.chatTrigger",
       "typeVersion": 1.1,
       "position": [
-        -1300,
+        -1480,
         -480
       ],
       "id": "9955594d-c101-4670-942c-574f7a3259f2",
@@ -39,8 +39,8 @@
       "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
       "typeVersion": 1.4,
       "position": [
-        -300,
-        -180
+        -200,
+        -260
       ],
       "id": "2b6ac7ba-2e6b-4fc1-9d26-31c2bb220e28",
       "name": "Memory",
@@ -54,90 +54,16 @@
     },
     {
       "parameters": {
-        "modelName": "models/gemini-2.5-flash",
-        "options": {
-          "temperature": 0.2
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-      "typeVersion": 1,
-      "position": [
-        -460,
-        -200
-      ],
-      "id": "fbad2017-5036-4a4f-82da-84d8a9f8d2a3",
-      "name": "Google Gemini Chat Model",
-      "credentials": {
-        "googlePalmApi": {
-          "id": "eyI35evqxMUov7Si",
-          "name": "Google Gemini(PaLM) Api account 2"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "description": "Use esta ferramenta para buscar as informações de um gerente pelo nome completo, onde deve ser extraido o nome do usuario",
-        "jsCode": "// Recebe o nome da IA e os dados globais\nconst nomeParaBuscar = $input.query.toLowerCase();\nconst users = $('GLOBAL').first().json.global_data.users;\nconst defaultUser = $('GLOBAL').first().json.global_data.default_user;\n\nconst foundUser = users.find(u => u.Nome.toLowerCase() === nomeParaBuscar);\n\nif (foundUser) {\n  return { json: { success: true, user_info: foundUser } };\n} else {\n  defaultUser.Nome = $input.item.json.nome;\n  return { json: { success: false, user_info: defaultUser, message: \"Usuário não encontrado, usando valores padrão.\" } };\n}"
-      },
-      "type": "@n8n/n8n-nodes-langchain.toolCode",
-      "typeVersion": 1.2,
-      "position": [
-        -140,
-        -200
-      ],
-      "id": "9f2be634-4aac-43ba-b304-af7d00c920a7",
-      "name": "Buscar Gerentes",
-      "executeOnce": false,
-      "alwaysOutputData": false,
-      "notesInFlow": false
-    },
-    {
-      "parameters": {
         "jsCode": "// 1. Nossa base de dados de usuários\nconst users = [\n    { \"Usuario_ID\": 1, \"Nome\": \"Ana Silva\", \"Cargo\": \"Gerente de Projetos Sênior\", \"Experiencia (anos)\": 12, \"Historico de Projetos\": 25, \"Sucesso Medio (percentual)\": \"0,88\" },\n    { \"Usuario_ID\": 2, \"Nome\": \"Bruno Costa\", \"Cargo\": \"Gerente de Projetos Pleno\", \"Experiencia (anos)\": 7, \"Historico de Projetos\": 15, \"Sucesso Medio (percentual)\": \"0,82\" },\n    { \"Usuario_ID\": 3, \"Nome\": \"Carla Dias\", \"Cargo\": \"Gerente de TI\", \"Experiencia (anos)\": 10, \"Historico de Projetos\": 18, \"Sucesso Medio (percentual)\": \"0,91\" }\n];\n\n// 2. Calcula os valores padrão (usando mediana para robustez)\nconst experiencias = users.map(u => u[\"Experiencia (anos)\"]);\nconst historicos = users.map(u => u[\"Historico de Projetos\"]);\nconst sucessos = users.map(u => parseFloat(String(u[\"Sucesso Medio (percentual)\"]).replace(',', '.')));\n\n// Ordena para pegar a mediana\nexperiencias.sort((a, b) => a - b);\nhistoricos.sort((a, b) => a - b);\nsucessos.sort((a, b) => a - b);\n\nconst defaultUser = {\n    \"Nome\": \"Visitante\",\n    \"Experiencia (anos)\": experiencias[Math.floor(experiencias.length / 2)],\n    \"Historico de Projetos\": historicos[Math.floor(historicos.length / 2)],\n    \"Sucesso Medio (percentual)\": sucessos[Math.floor(sucessos.length / 2)]\n};\n\n// 3. Retorna os dados para o resto do workflow\nreturn {\n    users: users,\n    default_user: defaultUser\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -780,
+        -1060,
         -480
       ],
       "id": "da42d679-f72c-4530-b2a5-f3f568c48f31",
       "name": "Carregar Dados e Padrões"
-    },
-    {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "cc7df311-eb0c-4945-a345-2a9d830a8b66",
-              "name": "sessionId",
-              "value": "={{ $json.sessionId }}",
-              "type": "string"
-            },
-            {
-              "id": "46fc19c7-270e-4946-9aaa-647d3ccd9603",
-              "name": "action",
-              "value": "={{ $json.action }}",
-              "type": "string"
-            },
-            {
-              "id": "81b70d19-0689-4aeb-b4c4-9440b0003b2a",
-              "name": "chatInput",
-              "value": "={{ $json.chatInput }}",
-              "type": "string"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        -1080,
-        -480
-      ],
-      "id": "3e3138eb-59f8-4c52-9285-e57acc6a4890",
-      "name": "SET CHAT_INFO"
     },
     {
       "parameters": {
@@ -186,7 +112,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -560,
+        -660,
         -480
       ],
       "id": "a36fb6b0-359d-488d-80e7-509f5307d065",
@@ -243,11 +169,113 @@
       "type": "n8n-nodes-base.httpRequestTool",
       "typeVersion": 4.2,
       "position": [
-        40,
-        -200
+        140,
+        -360
       ],
       "id": "c0005127-88c9-44ba-aad7-3a41a107c85e",
       "name": "chamar_api_predicao"
+    },
+    {
+      "parameters": {
+        "content": "## Cérebro do Workflow\n\nÉ o agente central responsável por interagir com o usuário, responder por perguntas sobre orçamentos de projetos e também perguntar sobre o projeto com a finalidade de obter todas as informações para acionar a API. Além disso também é responsável por receber a resposta da API e adaptar para responder o usuário.",
+        "height": 560,
+        "width": 420,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -400,
+        -680
+      ],
+      "typeVersion": 1,
+      "id": "67d0812e-9b7f-4200-97de-3df07ee0cdbf",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -340,
+        -260
+      ],
+      "id": "fbad2017-5036-4a4f-82da-84d8a9f8d2a3",
+      "name": "Gemini2.5-flash",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "eyI35evqxMUov7Si",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Input da aplicação\n\nÉ a entrada de dados, por onde o usuário vai interagir com o sistema através de mensagem. Pode ser substituído por outro input desde que seja passada 2 informações principais para adaptar ao workflow: um Id da sessão/conversa e a mensagem do usuário.",
+        "height": 560,
+        "width": 380,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1600,
+        -680
+      ],
+      "typeVersion": 1,
+      "id": "cf4f57a9-9168-4b4c-89e0-0ae641228780",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Verificação do Usuário\n\nÉ onde é feita a verificação se o usuário existe. Seria melhor fazendo uma consultar em um banco de dados, com validação por CPF ou outro identificador, mas diante do cenário, apenas para ilustração foi feita de forma estática ",
+        "height": 560,
+        "width": 360,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1180,
+        -680
+      ],
+      "typeVersion": 1,
+      "id": "6a156ae1-8640-4536-a4da-5904a374dc56",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Variáveis Globais\n\nÉ onde é atribuído as principais informações como dados do usuário que serão utilizados na consulta",
+        "height": 560,
+        "width": 340,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -780,
+        -680
+      ],
+      "typeVersion": 1,
+      "id": "f4540ab9-f23e-4d57-957b-5972fd39c41b",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Ferramentas\n\nÉ disponibilizado para a IA ferramentas para que ela seja capaz de resolver problemas a qual ela foi ensinada. No caso da aplicação é disponibilizado a ela a ferramenta de chamada da API para realizar a previsão do projeto quando ela obter todas as informações necessárias para isso.\n",
+        "height": 560,
+        "width": 360,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        60,
+        -680
+      ],
+      "typeVersion": 1,
+      "id": "9f3da301-65a3-4776-aaf4-16e7a4da5c12",
+      "name": "Sticky Note4"
     }
   ],
   "connections": {
@@ -255,7 +283,7 @@
       "main": [
         [
           {
-            "node": "SET CHAT_INFO",
+            "node": "Carregar Dados e Padrões",
             "type": "main",
             "index": 0
           }
@@ -273,38 +301,11 @@
         ]
       ]
     },
-    "Google Gemini Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Buscar Gerentes": {
-      "ai_tool": [
-        []
-      ]
-    },
     "Carregar Dados e Padrões": {
       "main": [
         [
           {
             "node": "GLOBAL",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "SET CHAT_INFO": {
-      "main": [
-        [
-          {
-            "node": "Carregar Dados e Padrões",
             "type": "main",
             "index": 0
           }
@@ -328,6 +329,17 @@
           {
             "node": "AI Agent",
             "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini2.5-flash": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
             "index": 0
           }
         ]
