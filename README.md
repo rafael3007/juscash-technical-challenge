@@ -1,6 +1,4 @@
-# Case | Vaga Analista de Machine Learning com foco em IA - JusCash
-
-Este repositório contém a resolução do case para a vaga de Analista de Machine Learning com foco em IA na JusCash, feito por Rafael Brito.
+# Case - JusCash
 
 ## 1. Contextualização
 
